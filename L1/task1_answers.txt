@@ -1,0 +1,69 @@
+1. What is the difference between AI, ML, and deep learning?
+
+AI is the broad field focused on making machines behave intelligently.
+
+ML (Machine Learning) is a subset of AI where systems learn patterns from data instead of being explicitly programmed.
+
+Deep learning is a subset of ML that uses multi-layer neural networks to learn complex patterns, especially in images, speech, and text.
+
+
+2. What is machine learning?
+Machine learning is a technique where algorithms learn relationships and patterns from data to make predictions or decisions.
+
+
+3. What is the primary difference between unsupervised and supervised machine learning?
+
+Supervised learning uses labeled data (inputs + known outputs). Labels are used for the models traning of classification.
+
+Unsupervised learning uses unlabeled data and discovers structure or patterns on its own. Clustering is a common output of unsupervised learning but model is not able to classify clusters and can only group simmilar data.
+
+
+4. What is reinforcement learning?
+Reinforcement learning is a learning paradigm where an agent interacts with an environment and learns by receiving rewards or penalties for its actions.
+
+
+5. What types of problems can machine learning solve well when compared to traditional programming?
+
+Problems with complex patterns (e.g., image recognition or advance robot movement in real world schenarios)
+
+Problems where rules are hard to define explicitly (e.g., spam detection, object detection)
+
+Problems that require adaptation over time (e.g., recommendation systems)
+
+
+6. What types of problems can you solve with unsupervised machine learning?
+
+Clustering (e.g., customer segmentation)
+
+Dimensionality reduction (e.g., data compression, visualization)
+
+Anomaly detection (e.g., fraud or sensor fault detection)
+
+
+7. What types of problems can you solve with supervised machine learning?
+
+Classification (e.g., email spam vs. not spam)
+
+Regression (e.g., house price prediction)
+
+Forecasting (e.g., demand or sales prediction)
+
+
+8.  Explain the difference between a ML algorithm and a ML model?
+
+An ML algorithm is the learning procedure (e.g., linear regression, decision tree).
+
+An ML model is the result of applying that algorithm to data (the trained parameters).
+
+
+9. List some of the challenges of machine learning and provide concrete examples?
+
+Data quality: Noisy or missing data → inaccurate predictions (e.g., incomplete customer records).
+
+Overfitting: Model performs well on training data but poorly on new data (e.g., memorizing instead of generalizing).
+
+Bias: Biased data leads to biased outcomes (e.g., unfair loan approvals).
+
+Scalability: Algorithms may not handle large datasets efficiently (e.g., slow training on big data).
+
+Interpretability: Complex models are hard to explain (e.g., deep neural networks in healthcare).
