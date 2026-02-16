@@ -26,6 +26,7 @@ def covariance_matrix(matrix):
     """
     matrix: numpy array of shape (n_samples, n_features)
     returns: covariance matrix of shape (n_features, n_features)
+    https://www.youtube.com/watch?v=152tSYtiQbw
     """
     n_samples = matrix.shape[0]
     mean = np.mean(matrix, axis=0)
