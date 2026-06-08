@@ -1,0 +1,36 @@
+21701825 parameters
+step 0: train loss 0.3580, val loss 0.3644
+  -> saved best model to output/depth_model_overlapping.pth
+step 100: train loss 0.1302, val loss 0.1284
+  -> saved best model to output/depth_model_overlapping.pth
+step 200: train loss 0.1229, val loss 0.1265
+  -> saved best model to output/depth_model_overlapping.pth
+step 300: train loss 0.1254, val loss 0.1224
+  -> saved best model to output/depth_model_overlapping.pth
+step 400: train loss 0.1248, val loss 0.1184
+  -> saved best model to output/depth_model_overlapping.pth
+step 500: train loss 0.1250, val loss 0.1202
+step 600: train loss 0.1257, val loss 0.1211
+step 700: train loss 0.1191, val loss 0.1202
+step 800: train loss 0.1197, val loss 0.1192
+step 900: train loss 0.1143, val loss 0.1131
+  -> saved best model to output/depth_model_overlapping.pth
+step 1000: train loss 0.1134, val loss 0.1170
+step 1100: train loss 0.1132, val loss 0.1129
+  -> saved best model to output/depth_model_overlapping.pth
+step 1200: train loss 0.1123, val loss 0.1148
+step 1300: train loss 0.1107, val loss 0.1135
+step 1400: train loss 0.1115, val loss 0.1122
+  -> saved best model to output/depth_model_overlapping.pth
+step 1500: train loss 0.1113, val loss 0.1148
+step 1600: train loss 0.1097, val loss 0.1093
+  -> saved best model to output/depth_model_overlapping.pth
+step 1700: train loss 0.1105, val loss 0.1092
+  -> saved best model to output/depth_model_overlapping.pth
+step 1800: train loss 0.1089, val loss 0.1115
+step 1900: train loss 0.1101, val loss 0.1060
+  -> saved best model to output/depth_model_overlapping.pth
+step 1999: train loss 0.1122, val loss 0.1116
+
+Training complete. Best val loss: 0.1060
+Model saved to: output/depth_model_overlapping.pth

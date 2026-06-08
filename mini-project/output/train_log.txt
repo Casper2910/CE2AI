@@ -1,0 +1,34 @@
+20522177 parameters
+step 0: train loss 0.3555, val loss 0.3542
+  -> saved best model to output/depth_model.pth
+step 100: train loss 0.1264, val loss 0.1227
+  -> saved best model to output/depth_model.pth
+step 200: train loss 0.1280, val loss 0.1302
+step 300: train loss 0.1202, val loss 0.1200
+  -> saved best model to output/depth_model.pth
+step 400: train loss 0.1231, val loss 0.1260
+step 500: train loss 0.1233, val loss 0.1188
+  -> saved best model to output/depth_model.pth
+step 600: train loss 0.1211, val loss 0.1158
+  -> saved best model to output/depth_model.pth
+step 700: train loss 0.1193, val loss 0.1153
+  -> saved best model to output/depth_model.pth
+step 800: train loss 0.1134, val loss 0.1122
+  -> saved best model to output/depth_model.pth
+step 900: train loss 0.1119, val loss 0.1067
+  -> saved best model to output/depth_model.pth
+step 1000: train loss 0.1150, val loss 0.1195
+step 1100: train loss 0.1105, val loss 0.1164
+step 1200: train loss 0.1100, val loss 0.1078
+step 1300: train loss 0.1103, val loss 0.1117
+step 1400: train loss 0.1112, val loss 0.1055
+  -> saved best model to output/depth_model.pth
+step 1500: train loss 0.1118, val loss 0.1150
+step 1600: train loss 0.1122, val loss 0.1091
+step 1700: train loss 0.1121, val loss 0.1073
+step 1800: train loss 0.1097, val loss 0.1116
+step 1900: train loss 0.1106, val loss 0.1162
+step 1999: train loss 0.1102, val loss 0.1144
+
+Training complete. Best val loss: 0.1055
+Model saved to: output/depth_model.pth

@@ -4,13 +4,16 @@ from PIL import Image
 
 import sys
 sys.path.append('/var/home/cbramm/Documents/AAU/CE2/CE2AI/mini-project')
-from train import DepthTransformer, ConvDecoder, Block, MultiHeadAttention, Head, MLP, PatchEmbed
+from train import DepthTransformer, ConvDecoder, Block, MultiHeadAttention, Head, Encoder, PatchEmbed
 
 from visualize_depth_matplotlib import visualize_pointcloud
 
 
-image_path = 'images/test_shapes.png'
-model_path = 'output/depth_model.pth'
+image_path = 'data/sample_rgb.png'
+model_path = 'models/depth_model_overlapping.pth'
+output_path_2d = 'output/sample_rgb_depth.png'
+output_path_3d = 'output/sample_rgb_pointcloud_3d.png'
+output_ply = 'output/sample_rgb_pointcloud_3d.ply'
 device     = 'cuda' if torch.cuda.is_available() else 'cpu'
 img_size   = 512
 
@@ -29,7 +32,7 @@ with torch.no_grad():
     depth = model(tensor)[0].squeeze().cpu().numpy()
 
 # save depth image
-Image.fromarray((depth * 255).astype(np.uint8)).save('output/shapes_depth.png')
+Image.fromarray((depth * 255).astype(np.uint8)).save(output_path_2d)
 
 # resize depth back to original image size for point cloud
 depth_orig = np.array(
@@ -61,11 +64,11 @@ rows = "\n".join(
     for p, c in zip(pts, cols)
 )
 
-with open('output/shapes_pointcloud.ply', 'w') as f_out:
+with open(output_ply, 'w') as f_out:
     f_out.write(header + rows)
 
-visualize_pointcloud('output/shapes_pointcloud.ply', 'output/shapes_pointcloud_3d.png')
+visualize_pointcloud(output_ply, output_path_3d)
 
-print("saved output/shapes_depth.png")
-print("saved output/shapes_pointcloud.ply")
-print("saved output/shapes_pointcloud_3d.png")
+print("saved " + output_path_2d)
+print("saved " + output_ply)
+print("saved " + output_path_3d)

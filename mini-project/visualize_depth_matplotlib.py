@@ -22,7 +22,12 @@ def visualize_pointcloud(file_path, save_path='output/pointcloud_3d.png'):
     # Plot
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111, projection='3d')
-    ax.scatter(pts[:, 0], pts[:, 1], pts[:, 2], c=cols, s=1)
+
+    #ax.scatter(pts[:, 0], pts[:, 1], pts[:, 2], c=cols, s=1)
+
+    # z axis inverted for clearer visualization (points with smaller depth appear closer)
+    ax.scatter(pts[:, 0], pts[:, 1], -pts[:, 2], c=cols, s=1)
+    
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')

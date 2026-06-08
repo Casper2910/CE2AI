@@ -8,7 +8,13 @@ import math
 
 # hyperparameters
 img_size       = 512     # height and width of each image
-patch_size     = 16      # each patch is patch_size x patch_size pixels
+
+# CNN values
+patch_size     = 32      # each patch is patch_size x patch_size pixels
+stride         = patch_size // 2  # stride for overlapping patches
+padding        = patch_size // 4  # padding for overlapping patches
+
+# transformer values
 n_embd         = 512     # transformer embedding dimension
 n_head         = 8       # number of attention heads
 n_layer        = 6       # number of transformer blocks
@@ -18,8 +24,13 @@ max_iters      = 2000    # total training steps
 eval_interval  = 100     # how often to calculate loss
 learning_rate  = 3e-4    # learning rate (AdamW optimizer)
 dataset_size   = 2000    # number of synthetic images to generate
-save_path      = 'output/depth_model.pth'
+save_path      = 'models/depth_model_overlapping.pth'
 device         = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+# calcuate number of patches per image based on the patch size, stride, and padding
+def calc_n_patches(img_size, patch_size, stride, padding):
+    size   = (img_size - patch_size + 2 * padding) // stride + 1
+    return size * size
 
 torch.manual_seed(1337)
 
@@ -31,56 +42,11 @@ torch.backends.cudnn.benchmark = False
 # depths.  The ground-truth is a single-channel depth map where
 # 1.0 = closest and 0.0 = furthest away.
 
-class SyntheticDepthDataset(Dataset):
-
-    def __init__(self, length=dataset_size):
-        self.length = length
-
-    def __len__(self):
-        return self.length
-
-    def __getitem__(self, idx):
-        H = W = img_size
-        rgb   = np.zeros((H, W, 3), dtype=np.float32)
-        depth = np.zeros((H, W),    dtype=np.float32)
-
-        # draw 3-8 shapes, sorted back-to-front so closer ones occlude far ones
-        shapes = [self._random_shape(H, W) for _ in range(random.randint(3, 8))]
-        shapes.sort(key=lambda s: s['depth'])          # paint far shapes first
-
-        for s in shapes:
-            rgb[s['mask']]   = s['colour']
-            depth[s['mask']] = s['depth']
-
-        # soft gradient background for pixels with no shape
-        yy, xx   = np.mgrid[0:H, 0:W] / max(H, W)
-        bg_color = np.stack([xx, yy, 1 - xx], axis=-1).astype(np.float32) * 0.15
-        bg_mask  = depth == 0
-        rgb[bg_mask]   = bg_color[bg_mask]
-        depth[bg_mask] = 0.05
-
-        rgb_t   = torch.from_numpy(rgb.transpose(2, 0, 1))   # (3, H, W)
-        depth_t = torch.from_numpy(depth).unsqueeze(0)        # (1, H, W)
-        return rgb_t, depth_t
-
-    def _random_shape(self, H, W):
-        cx  = random.randint(0, W - 1)
-        cy  = random.randint(0, H - 1)
-        rw  = random.randint(W // 16, W // 3)
-        rh  = random.randint(H // 16, H // 3)
-        col = np.array([random.random(), random.random(), random.random()],
-                       dtype=np.float32)
-        d   = random.uniform(0.1, 1.0)
-        yy, xx = np.ogrid[0:H, 0:W]
-        if random.random() < 0.5:                          # rectangle
-            mask = (xx >= cx-rw) & (xx < cx+rw) & (yy >= cy-rh) & (yy < cy+rh)
-        else:                                              # ellipse
-            mask = (xx-cx)**2/rw**2 + (yy-cy)**2/rh**2 <= 1.0
-        return {'mask': mask, 'colour': col, 'depth': d}
-
+# use data generator from other file, but with the new constructor that takes img_size as an argument
+from data_generator import SyntheticDepthDataset
 
 # split into train / val
-full_dataset = SyntheticDepthDataset(length=dataset_size)
+full_dataset = SyntheticDepthDataset(length=dataset_size, img_size=img_size)
 n_val        = max(1, dataset_size // 10)
 n_train      = dataset_size - n_val
 train_ds, val_ds = torch.utils.data.random_split(
@@ -103,7 +69,8 @@ class PatchEmbed(nn.Module):
     def __init__(self):
         super().__init__()
         # one conv with kernel=stride=patch_size gives exactly one vector per patch
-        self.proj = nn.Conv2d(3, n_embd, kernel_size=patch_size, stride=patch_size)
+        # self.proj = nn.Conv2d(3, n_embd, kernel_size=patch_size, stride=patch_size)
+        self.proj = nn.Conv2d(3, n_embd, kernel_size=patch_size, stride=patch_size//2, padding=patch_size//4)
 
     def forward(self, x):
         x = self.proj(x)                    # (B, n_embd, h, w)  where h=H/patch_size
@@ -212,9 +179,9 @@ class ConvDecoder(nn.Module):
     Each stage doubles the spatial size.
     """
 
-    def __init__(self):
+    def __init__(self, h):
         super().__init__()
-        n_stages = int(math.log2(patch_size)) # → 4
+        n_stages = int(math.log2(img_size // h))  # how many doublings needed
 
         channels = [n_embd] + [max(16, n_embd // (2**i)) for i in range(1, n_stages + 1)]
         # e.g. [768, 384, 192, 96, 48]
@@ -254,23 +221,25 @@ class DepthTransformer(nn.Module):
 
     def __init__(self):
         super().__init__()
-        n_patches = (img_size // patch_size) ** 2
+
+        n_patches = calc_n_patches(img_size, patch_size, stride, padding)
 
         self.patch_embed = PatchEmbed() # Patch embedder module
 
         # position embeddings, initialized as random normal
         self.pos_embed   = nn.Parameter(torch.randn(1, n_patches, n_embd) * 0.02) 
 
-        # stack of transformer blocks
+        # initialize stack of transformer blocks depending on n_layer
         self.blocks      = nn.Sequential(*[Block() for _ in range(n_layer)])
 
         # final layer norm before the CNN decoder
         self.ln_f        = nn.LayerNorm(n_embd)
 
         # decoder module to upsample back to image resolution
-        self.decoder     = ConvDecoder()
+        h                = int(math.sqrt(n_patches))  # spatial size of feature map
+        self.decoder     = ConvDecoder(h)
 
-        # initialise weights the same way GPT does
+        # initialise weights with a normal distribution, and zero the biases
         self.apply(self._init_weights)
 
     def _init_weights(self, module):
