@@ -166,7 +166,7 @@ class Block(nn.Module):
 
     def forward(self, x):
         x = x + self.attention(self.ln1(x))     # residual + attention
-        x = x + self.encoder(self.ln2(x))   # residual + MLP
+        x = x + self.encoder(self.ln2(x))       # residual + MLP
         return x
 
 

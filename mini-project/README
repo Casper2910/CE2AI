@@ -1,17 +1,78 @@
-training loop
-  └── infinite(loader)           # endless batches
-  └── DepthTransformer.forward
-        └── PatchEmbed.forward
-        └── Block.forward × n_layer
-              └── MultiHeadAttention.forward
-                    └── Head.forward × n_head
-              └── MLP.forward
-        └── ConvDecoder.forward
-        └── depth_loss
-              └── gradient_loss
-  └── loss.backward + optimizer.step
+data_generator.py
+      SyntheticDepthDataset outputs a generated dataset of shapes (eclipse or square) on a background mesh
 
-every 1000 steps:
-  └── estimate_loss
-        └── DepthTransformer.forward (no grad)
-              └── (same chain as above, minus depth_loss)
+predict.py
+      Use a pre-trained model in model path and input image to generate 3D estimation of 2D image of shapes
+      uses visualize_pointcloud function from vizualize_depth_matplotlib.py to vizualize pointcloud
+
+vizualize_depth_matplotlib.py
+      Provides visualize_pointcloud function for predict.py
+
+train.py:
+      Runs the complete traning loop using data from data_generator.py SyntheticDepthDataset class.
+
+      Loop goes like this:
+
+      1. Data generation:
+            full_dataset = SyntheticDepthDataset(length=dataset_size, img_size=img_size)
+            returns full dataset of fixed size represented PyTorch tensor (torch.Size([3, H, W])):
+                  rgb_t[0] = red channel (H × W)
+                  rgb_t[1] = green channel (H × W)
+                  rgb_t[2] = blue channel (H × W)
+      
+      2. Patch embedding (tokenisation)
+            PatchEmbed() uses Conv2d to embed all patches of the input image with patch size and stride and padding options applied
+      
+      3. Positional embedding:
+            tokens = tokens + self.pos_embed
+            potitional vector token is added to raw token from the patch embedding
+
+      4. Transformer block
+            A :   class Block(nn.Module) defines how each transformer block.
+                  each block performs:
+                        normalization (self.ln1/self.ln2 = nn.LayerNorm(n_embd))
+                        ln1 for normalization input before self attention is applied
+                        ln2 for normalization of the updated tokens before the encoder
+            
+            B :   Uses multi-head self-attention to allow patches to attend to other patches.
+
+                        self.attention = MultiHeadAttention(n_head, head_size)
+
+            C :   MultiHeadAttention runs multiple attention Heads in parallel.
+                  Each Head computes:
+
+                        Attention(Q,K,V) = softmax(QKᵀ / √d) V
+
+                        where Q (queries), K (keys), and V (values) are learned projections of the input tokens.
+
+                        The outputs from all Heads are concatenated and projected back to the embedding dimension.
+                  
+            D :   Residual connection:
+                        x = x + self.attention(self.ln1(x))
+                        Token vector is added to the attention output to update specific features of the token vector depending on the assosiation output
+
+            E :   Feed-forward MLP (class Encoder(nn.Module)):
+                        x = x + self.encoder(self.ln2(x))
+                        After attention is applied, process each token independently
+
+      5. Final normalization after transformation blocks
+            tokens = self.ln_f(tokens) = nn.LayerNorm(n_embd)
+
+      6. Reshape image back to 2D:
+            feat = tokens.transpose(1, 2).reshape(B, D, h, w)
+
+            The transformer outputs a flat sequence (B, T, n_embd). To use a CNN decoder, this gets reshaped back into a 2D spatial grid (B, n_embd, h, w) which is the same spatial layout as the original patch grid.
+      
+      7. CNN upsampling (decoder) 
+            class ConvDecoder(nn.Module) upscales: 
+                  Takes the (B, n_embd, h, w) feature map produced by the transformer and upsamples it back to (B, 1, H, W) using transposed convolutions.
+
+      8. Compute loss and back propagate to update weights:
+            
+            A: Compute loss:
+                  _, loss = model(rgb, depth_gt)
+
+            B: Update weights:
+                  loss.backward()
+                  optimizer.step()
+            
