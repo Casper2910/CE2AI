@@ -1,0 +1,17 @@
+training loop
+  └── infinite(loader)           # endless batches
+  └── DepthTransformer.forward
+        └── PatchEmbed.forward
+        └── Block.forward × n_layer
+              └── MultiHeadAttention.forward
+                    └── Head.forward × n_head
+              └── MLP.forward
+        └── ConvDecoder.forward
+        └── depth_loss
+              └── gradient_loss
+  └── loss.backward + optimizer.step
+
+every 1000 steps:
+  └── estimate_loss
+        └── DepthTransformer.forward (no grad)
+              └── (same chain as above, minus depth_loss)
