@@ -1,1 +1,3 @@
 venv
+miniproject/__pycache__/
+miniproject/output/depth_model.pth
