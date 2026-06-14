@@ -8,13 +8,17 @@ The foundation of everything else. A chain of layers where each layer is:
 ```
 output = activation(input @ weights + bias)
 ```
-"Deep" just means more than one hidden layer. Each layer learns increasingly abstract features — early layers detect simple patterns, later layers detect complex combinations of those patterns. Everything below is a specialised variant of this.
+"Deep" just means more than one hidden layer. Each layer learns increasingly abstract features — early layers detect simple patterns,
+later layers detect complex combinations of those patterns. Everything below is a specialised variant of this.
 
 ---
 
 **CNN — Convolutional Neural Network**
 
-Designed for spatial data (images). Instead of connecting every neuron to every other neuron, a small kernel slides across the input detecting local patterns — edges, textures, shapes. Key insight: the same feature detector (kernel) is useful everywhere in the image, so you share weights across positions. This is exactly what your `PatchEmbed` and `ConvDecoder` do. CNNs are translation invariant — a cat in the top-left and a cat in the bottom-right produce similar activations.
+Designed for spatial data (images). Instead of connecting every neuron to every other neuron, a small kernel slides across the input detecting local patterns 
+edges, textures, shapes. Key insight: the same feature detector (kernel) is useful everywhere in the image, so you share weights across positions.
+This is exactly what your `PatchEmbed` and `ConvDecoder` do. CNNs are translation invariant — 
+a cat in the top-left and a cat in the bottom-right produce similar activations.
 
 ---
 
@@ -24,13 +28,15 @@ Designed for sequential data (text, time series). Has a hidden state that carrie
 ```
 h_t = activation(input_t @ W + h_(t-1) @ U)
 ```
-The problem is vanishing gradients — information from early in the sequence gets washed out by the time you backpropagate through many steps. This is what LSTM was invented to fix.
+The problem is vanishing gradients — information from early in the sequence gets washed out by the time you backpropagate through many steps.
+This is what LSTM was invented to fix.
 
 ---
 
 **GRU — Gated Recurrent Unit** (you wrote GIO, likely this)
 
-A simplified version of LSTM. Uses two gates (reset and update) instead of LSTM's three, making it faster to train while solving the same vanishing gradient problem. In practice GRU and LSTM perform similarly — GRU is cheaper.
+A simplified version of LSTM. Uses two gates (reset and update) instead of LSTM's three,
+making it faster to train while solving the same vanishing gradient problem. In practice GRU and LSTM perform similarly — GRU is cheaper.
 
 ---
 
@@ -41,7 +47,8 @@ An RNN with a memory cell and three gates that control what information to keep,
 - **Input gate** — what new information to write to memory
 - **Output gate** — what to read out of memory
 
-This lets it remember relevant information across hundreds of timesteps where a vanilla RNN would forget. Largely superseded by transformers for most tasks but still used in time series and embedded systems.
+This lets it remember relevant information across hundreds of timesteps where a vanilla RNN would forget.
+Largely superseded by transformers for most tasks but still used in time series and embedded systems.
 
 ---
 
@@ -51,7 +58,8 @@ Learns to compress data into a small representation and then reconstruct it:
 ```
 input → encoder → bottleneck (latent space) → decoder → output
 ```
-The bottleneck forces the network to learn only the most essential features. Your `DepthTransformer` is essentially an autoencoder — transformer encodes the image into tokens, CNN decoder reconstructs a depth map.
+The bottleneck forces the network to learn only the most essential features. Your `DepthTransformer` is essentially an autoencoder 
+transformer encodes the image into tokens, CNN decoder reconstructs a depth map.
 
 **Denoising variants** corrupt the input before encoding and train the model to reconstruct the clean original:
 - **Mask** — randomly zero out patches of the input (this is how BERT and MAE work)
@@ -64,7 +72,8 @@ The idea is that by forcing the model to reconstruct from corrupted input it lea
 
 **Stacked Autoencoder + Layer-wise Training**
 
-A deep autoencoder with multiple hidden layers. The problem in the early days (pre-2012) was that training deep networks end-to-end with backpropagation simply didn't work — gradients vanished before reaching the early layers.
+A deep autoencoder with multiple hidden layers. The problem in the early days (pre-2012) was that training deep networks 
+end-to-end with backpropagation simply didn't work — gradients vanished before reaching the early layers.
 
 The solution was **layer-wise pretraining** — train one layer at a time:
 1. Train a shallow autoencoder on the raw input
@@ -74,7 +83,10 @@ The solution was **layer-wise pretraining** — train one layer at a time:
 
 **Why we don't need it now:**
 
-Modern techniques solved the vanishing gradient problem directly — ReLU activations (don't saturate like sigmoid), batch normalisation (keeps activations in a healthy range), residual connections (gradient highway), better weight initialisation (your `std=0.02`), and vastly more compute. "Garbage in garbage out" referred to the fact that without pretraining, random initialisation produced garbage gradients that never recovered — modern tricks make random initialisation work fine.
+Modern techniques solved the vanishing gradient problem directly — ReLU activations (don't saturate like sigmoid),
+batch normalisation (keeps activations in a healthy range), residual connections (gradient highway),
+better weight initialisation (your `std=0.02`), and vastly more compute. "Garbage in garbage out" referred to the fact that without pretraining,
+random initialisation produced garbage gradients that never recovered — modern tricks make random initialisation work fine.
 
 ---
 
@@ -89,13 +101,16 @@ They play a minimax game — the generator gets better at fooling, the discrimin
 D tries to maximise: log(D(real)) + log(1 - D(G(noise)))
 G tries to minimise: log(1 - D(G(noise)))
 ```
-Training is notoriously unstable — mode collapse (generator produces the same output every time) and vanishing gradients are common. Largely superseded by diffusion models for image generation.
+Training is notoriously unstable — mode collapse (generator produces the same output every time) and vanishing gradients are common.
+Largely superseded by diffusion models for image generation.
 
 ---
 
 **Transformer**
 
-You already know this well from your code. The key insight is replacing recurrence with self-attention — every token attends to every other token simultaneously, which parallelises perfectly on GPUs and captures long-range dependencies that RNNs struggle with. The LLM core is just a very deep transformer (GPT-4 has ~96 layers) trained on massive text data to predict the next token.
+You already know this well from your code. The key insight is replacing recurrence with self-attention -
+every token attends to every other token simultaneously, which parallelises perfectly on GPUs and captures long-range dependencies that RNNs struggle with. 
+The LLM core is just a very deep transformer (GPT-4 has ~96 layers) trained on massive text data to predict the next token.
 
 ---
 
@@ -113,7 +128,9 @@ x_0 (clean) → x_1 → x_2 → ... → x_T (pure noise)
 x_T (pure noise) → x_(T-1) → ... → x_0 (clean image)
 ```
 
-At inference you start from random noise and run the reverse process — the network iteratively denoises it into a coherent image. Conditioning on text (like "a cat on a surfboard") is added via cross-attention between the text embeddings and the image features. Diffusion models beat GANs because training is stable (no adversarial game) and they produce more diverse outputs.
+At inference you start from random noise and run the reverse process — the network iteratively denoises it into a coherent image. 
+Conditioning on text (like "a cat on a surfboard") is added via cross-attention between the text embeddings and the image features. 
+Diffusion models beat GANs because training is stable (no adversarial game) and they produce more diverse outputs.
 
 ---
 
@@ -137,25 +154,36 @@ Where `α` is learning rate, `r` is reward received, `s'` is the next state.
 
 **RL Algorithm Types:**
 
-**Policy-based** — directly learn a policy `π(a|s)` — given state s, output a probability distribution over actions. Optimise the policy directly with gradient ascent on expected reward. Good for continuous action spaces. Example: REINFORCE.
+**Policy-based** — directly learn a policy `π(a|s)` — given state s, output a probability distribution over actions.
+Optimise the policy directly with gradient ascent on expected reward. Good for continuous action spaces. Example: REINFORCE.
 
-**Value-based** — learn a value function (Q-values) and derive the policy implicitly by always picking the highest-value action. Example: Q-learning, DQN. Works well for discrete action spaces.
+**Value-based** — learn a value function (Q-values) and derive the policy implicitly by always picking the highest-value action.
+Example: Q-learning, DQN. Works well for discrete action spaces.
 
-**Actor-Critic** — combines both. The actor is a policy network that decides actions, the critic is a value network that evaluates how good those actions were and guides the actor's updates. More stable than pure policy gradient.
+**Actor-Critic** — combines both. The actor is a policy network that decides actions,
+the critic is a value network that evaluates how good those actions were and guides the actor's updates.
+More stable than pure policy gradient.
 - **A2C** — synchronous actor-critic, multiple workers update a single model
 - **A3C** — asynchronous version, workers update asynchronously (faster but noisier)
 - **DDPG** — actor-critic for continuous action spaces, uses deterministic policy
 - **PPO** — Proximal Policy Optimisation, clips the policy update to prevent too-large steps, currently the most widely used algorithm (used to train ChatGPT via RLHF)
 
-**Model-based** — the agent learns a model of the environment (predicts next state and reward given current state and action) and plans ahead using it. More sample efficient but errors in the model compound. Example: AlphaZero.
+**Model-based** — the agent learns a model of the environment (predicts next state and reward given current state and action)
+and plans ahead using it. More sample efficient but errors in the model compound. Example: AlphaZero.
 
-**Model-free** — learns directly from experience without building a world model. Simpler but needs more environment interactions. Most deep RL is model-free.
+**Model-free** — learns directly from experience without building a world model. Simpler but needs more environment interactions.
+Most deep RL is model-free.
 
-**Multi-agent** — multiple agents in the same environment, can be cooperative, competitive, or mixed. Much harder because the environment is non-stationary from each agent's perspective — other agents are also learning and changing their behaviour.
+**Multi-agent** — multiple agents in the same environment, can be cooperative, competitive, or mixed.
+Much harder because the environment is non-stationary from each agent's perspective -
+other agents are also learning and changing their behaviour.
 
-**Q-learning** — a value-based model-free algorithm. Maintains a table of Q(s,a) values and updates them using the Bellman equation after each step. Only works for small discrete state spaces — you can't have a table with a row for every possible video game frame.
+**Q-learning** — a value-based model-free algorithm. 
+Maintains a table of Q(s,a) values and updates them using the Bellman equation after each step. 
+Only works for small discrete state spaces — you can't have a table with a row for every possible video game frame.
 
-**DQN — Deep Q-Network** — replaces the Q-table with a neural network that takes a state and outputs Q-values for all actions. Two key tricks that make it work:
+**DQN — Deep Q-Network** — replaces the Q-table with a neural network that takes a state and outputs Q-values for all actions. 
+Two key tricks that make it work:
 - **Experience replay** — store past transitions in a buffer, sample random minibatches to break correlations between consecutive updates
 - **Target network** — a slowly updated copy of the network used for computing targets, preventing the instability of chasing a moving target
 
