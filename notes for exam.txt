@@ -1,0 +1,33 @@
+DNN
+CNN
+RNN
+GIO?
+LSTM
+Auto encoder (de-noising: (mask, gaussian noise, salt and pepper))
+Stack auto encoder ( multiple hidden layer ) "layer wide traning" 
+why did we need layer wide traning in the old days compared to now (garbage in garbage out)
+
+GAN
+Transformer (LLM core feature)
+
+missing from lectures: Defuzion
+
+reinforcement learning : calculate q value and some other equation.
+
+reinforcement algorithms type:
+
+policy based 
+
+value based
+
+actor-critic (a2c a3c...) (DDPG, PPO)
+
+model based
+
+model free
+
+multi-agent 
+
+q-leaning
+
+dq-learning
